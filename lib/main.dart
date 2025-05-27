@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:learn/auth/login_or_register.dart';
+import 'package:learn/theme/dark_mode.dart';
+import 'package:learn/theme/light_mode.dart';
 
 void main() {
   runApp(const MainApp());
@@ -9,13 +12,11 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
-      ),
+      home: const LoginOrRegister(),
+      theme: lightMode,
+      darkTheme: darkMode,
     );
   }
 }
