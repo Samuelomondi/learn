@@ -4,6 +4,5 @@
 - Create an account
 - Sign in to existing account
 - Log out of an account
-- Post a message
-- View posts from all users
+- Post a message and view posts from all users
 - View all usernames
