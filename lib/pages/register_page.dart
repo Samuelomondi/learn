@@ -1,18 +1,61 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:learn/components/my_button.dart';
 import 'package:learn/components/my_textfield.dart';
 
-class RegisterPage extends StatelessWidget {
+import '../helper/helper_function.dart';
+
+class RegisterPage extends StatefulWidget {
   final void Function()? onTap;
 
-  final TextEditingController usernameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
 
   RegisterPage({super.key, required this.onTap});
 
-  void register() {
+  @override
+  State<RegisterPage> createState() => _RegisterPageState();
+}
+
+class _RegisterPageState extends State<RegisterPage> {
+  final TextEditingController usernameController = TextEditingController();
+
+  final TextEditingController emailController = TextEditingController();
+
+  final TextEditingController passwordController = TextEditingController();
+
+  final TextEditingController confirmPasswordController = TextEditingController();
+
+  void registerUser() async {
+    // show loading circle
+    showDialog(
+        context: context,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+    );
+
+    // make sure passwords match
+    if (passwordController.text != confirmPasswordController.text) {
+      // pop loading circle
+      Navigator.pop(context);
+
+      // show error
+      displayMessageToUser("Passwords don't match", context);
+    } else {
+      // try creating the user
+      try {
+        // create the user
+        UserCredential? userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: emailController.text, password: passwordController.text);
+
+        // pop loading circle
+        Navigator.pop(context);
+      } on FirebaseAuthException catch (e) {
+        // pop loading circle
+        Navigator.pop(context);
+
+        // show error
+        displayMessageToUser(e.code, context);
+      }
+    }
   }
 
   @override
@@ -75,7 +118,7 @@ class RegisterPage extends StatelessWidget {
               // register button
               MyButton(
                 text: "Register",
-                onTap: register,
+                onTap: registerUser,
               ),
               const SizedBox(height: 25,),
 
@@ -90,7 +133,7 @@ class RegisterPage extends StatelessWidget {
                     ),
                   ),
                   GestureDetector(
-                    onTap: onTap,
+                    onTap: widget.onTap,
                     child: Text(
                       "Login here",
                       style: TextStyle(
@@ -106,6 +149,4 @@ class RegisterPage extends StatelessWidget {
       ),
     );
   }
-
-
 }
