@@ -38,9 +38,9 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget buildMessageBubble(Map<String, dynamic> messageData) {
-    bool isMe = messageData['senderId'] == widget.currentUserId;
+    final isMe = messageData['senderId'] == widget.currentUserId;
     final timestamp = messageData['timestamp'] as Timestamp?;
-    final timeString = timestamp != null
+    final time = timestamp != null
         ? TimeOfDay.fromDateTime(timestamp.toDate()).format(context)
         : '';
 
@@ -50,18 +50,17 @@ class _ChatPageState extends State<ChatPage> {
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: isMe ? Colors.grey[700] : Colors.grey[500],
+          color: isMe ? Colors.grey[500] : Colors.grey[300],
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
-          crossAxisAlignment:
-          isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             Text(messageData['text']),
-            if (timeString.isNotEmpty)
+            if (time.isNotEmpty)
               Text(
-                timeString,
-                style: TextStyle(fontSize: 10, color: Colors.grey[900]),
+                time,
+                style: TextStyle(fontSize: 10, color: Colors.grey[700]),
               ),
           ],
         ),
@@ -76,9 +75,6 @@ class _ChatPageState extends State<ChatPage> {
         .doc(widget.chatId)
         .collection('messages')
         .orderBy('timestamp', descending: true);
-
-    print('Current chatId: ${widget.chatId}');
-    print('Current userId: ${widget.currentUserId}');
 
     return Scaffold(
       appBar: AppBar(
@@ -99,29 +95,23 @@ class _ChatPageState extends State<ChatPage> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                final messages = snapshot.data?.docs ?? [];
+
+                if (messages.isEmpty) {
                   return const Center(child: Text("Say hi 👋"));
                 }
-
-                final messages = snapshot.data!.docs;
 
                 return ListView.builder(
                   reverse: true,
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
-                    final messageData =
-                    messages[index].data() as Map<String, dynamic>;
-
-                    print('Message from ${messageData['senderId']}: ${messageData['text']}');
-
+                    final messageData = messages[index].data() as Map<String, dynamic>;
                     return buildMessageBubble(messageData);
                   },
                 );
               },
             ),
           ),
-
-          // Message input
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
             child: Row(

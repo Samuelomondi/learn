@@ -9,7 +9,7 @@ import 'chat_page.dart';
 class UsersPage extends StatelessWidget {
   const UsersPage({super.key});
 
-  // Helper to generate a consistent chatId between two users
+  // Helper to generate consistent chatId
   String getChatId(String uid1, String uid2) {
     return uid1.hashCode <= uid2.hashCode ? '${uid1}_$uid2' : '${uid2}_$uid1';
   }
@@ -23,23 +23,23 @@ class UsersPage extends StatelessWidget {
       body: StreamBuilder(
         stream: FirebaseFirestore.instance.collection("Users").snapshots(),
         builder: (context, snapshot) {
-          // handle errors
+          // Handle errors
           if (snapshot.hasError) {
             displayMessageToUser("Something went wrong", context);
             return const Center(child: Text("Error loading users"));
           }
 
-          // loading state
+          // Loading indicator
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // no data
+          // No data case
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(child: Text("No users found."));
           }
 
-          // exclude current user and sort alphabetically
+          // Exclude current user and sort
           final users = snapshot.data!.docs
               .where((doc) => doc.id != currentUserId)
               .toList()
@@ -47,11 +47,11 @@ class UsersPage extends StatelessWidget {
 
           return Column(
             children: [
-              // back button
+              // Back button
               Padding(
                 padding: const EdgeInsets.only(top: 50, left: 10),
                 child: Row(
-                  children: [
+                  children: const [
                     MyBackButton(),
                   ],
                 ),
@@ -65,7 +65,7 @@ class UsersPage extends StatelessWidget {
                 ),
               ),
 
-              // list of users
+              // User list
               Expanded(
                 child: ListView.builder(
                   itemCount: users.length,
@@ -77,7 +77,7 @@ class UsersPage extends StatelessWidget {
 
                     return GestureDetector(
                       onTap: () async {
-                        // Show loading dialog while checking/creating chat
+                        // Show loading spinner
                         showDialog(
                           context: context,
                           barrierDismissible: false,
@@ -85,13 +85,15 @@ class UsersPage extends StatelessWidget {
                           const Center(child: CircularProgressIndicator()),
                         );
 
+                        // Generate consistent chat ID
                         final chatId = getChatId(currentUserId, otherUserId);
-
                         final chatRef = FirebaseFirestore.instance
-                            .collection('Chats')
+                            .collection('chats')
                             .doc(chatId);
 
                         final chatSnapshot = await chatRef.get();
+
+                        // Create chat if it doesn’t exist
                         if (!chatSnapshot.exists) {
                           await chatRef.set({
                             'participants': [currentUserId, otherUserId],
@@ -99,10 +101,10 @@ class UsersPage extends StatelessWidget {
                           });
                         }
 
-                        // Close loading dialog
+                        // Close loading
                         Navigator.pop(context);
 
-                        // Navigate to ChatPage
+                        // Go to chat page
                         Navigator.push(
                           context,
                           MaterialPageRoute(

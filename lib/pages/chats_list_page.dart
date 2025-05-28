@@ -1,111 +1,91 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-
-import 'chat_page.dart';
-
+import 'package:chat/pages/chat_page.dart';
 
 class ChatsListPage extends StatelessWidget {
   const ChatsListPage({super.key});
 
-  String getChatId(String uid1, String uid2) {
-    return uid1.hashCode <= uid2.hashCode ? '${uid1}_$uid2' : '${uid2}_$uid1';
-  }
-
-  String formatTimestamp(Timestamp? timestamp) {
-    if (timestamp == null) return '';
-    final date = timestamp.toDate();
-    return DateFormat.jm().format(date); // Example: 5:23 PM
-  }
-
   @override
   Widget build(BuildContext context) {
-    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+    final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("chats"),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: const Text("Chats"),
       ),
       body: StreamBuilder<QuerySnapshot>(
+        // Get chats where current user is a participant
         stream: FirebaseFirestore.instance
             .collection('chats')
             .where('participants', arrayContains: currentUserId)
             .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
+          // Handle errors
+          if (snapshot.hasError) {
+            return const Center(child: Text("Something went wrong"));
+          }
+
+          // Show loading spinner
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+
+          // Show message if no chats found
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text("No chats yet."));
+            return const Center(child: Text("No chats yet"));
           }
 
-          final chats = snapshot.data!.docs;
+          final chatDocs = snapshot.data!.docs;
 
           return ListView.builder(
-            itemCount: chats.length,
+            itemCount: chatDocs.length,
             itemBuilder: (context, index) {
-              final chatDoc = chats[index];
+              final chatDoc = chatDocs[index];
               final chatId = chatDoc.id;
-              final participants = List<String>.from(chatDoc['participants']);
-              final otherUserId =
-              participants.firstWhere((id) => id != currentUserId);
+              final chatData = chatDoc.data() as Map<String, dynamic>;
 
+              final participants = chatData['participants'] as List<dynamic>;
+
+              // Find the ID of the other participant
+              final otherUserId = participants.firstWhere(
+                    (id) => id != currentUserId,
+                orElse: () => 'Unknown',
+              );
+
+              // Load the other user's info to show username
               return FutureBuilder<DocumentSnapshot>(
                 future: FirebaseFirestore.instance
-                    .collection('Users')
+                    .collection("Users")
                     .doc(otherUserId)
                     .get(),
                 builder: (context, userSnapshot) {
-                  if (!userSnapshot.hasData) {
-                    return const SizedBox();
+                  if (userSnapshot.connectionState == ConnectionState.waiting) {
+                    return const ListTile(title: Text("Loading..."));
                   }
 
-                  final otherUsername = userSnapshot.data!['username'];
+                  if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+                    return const ListTile(title: Text("User not found"));
+                  }
 
-                  return StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('chats')
-                        .doc(chatId)
-                        .collection('messages')
-                        .orderBy('timestamp', descending: true)
-                        .limit(1)
-                        .snapshots(),
-                    builder: (context, messageSnapshot) {
-                      String lastMessage = "Say hi 👋";
-                      String time = "";
+                  final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                  final username = userData['username'] ?? "Unknown";
+                  final email = userData['email'] ?? "";
 
-                      if (messageSnapshot.hasData &&
-                          messageSnapshot.data!.docs.isNotEmpty) {
-                        final message =
-                        messageSnapshot.data!.docs.first.data()
-                        as Map<String, dynamic>;
-                        lastMessage = message['text'];
-                        time = formatTimestamp(message['timestamp']);
-                      }
-
-                      return ListTile(
-                        title: Text(otherUsername),
-                        subtitle: Text(
-                          lastMessage,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                  return ListTile(
+                    title: Text(username),
+                    subtitle: Text(email),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChatPage(
+                            chatId: chatId,
+                            currentUserId: currentUserId,
+                            otherUsername: username,
+                          ),
                         ),
-                        trailing: Text(time),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ChatPage(
-                                chatId: chatId,
-                                currentUserId: currentUserId,
-                                otherUsername: otherUsername,
-                              ),
-                            ),
-                          );
-                        },
                       );
                     },
                   );
