@@ -54,11 +54,6 @@ class _RegisterPageState extends State<RegisterPage> {
         // create a user document to add to firestore
         await createUserDocument(userCredential);
 
-        // pop loading circle
-        if (context.mounted) {
-          Navigator.pop(context);
-        }
-
       } on FirebaseAuthException catch (e) {
         // remove loading indicator
         if (context.mounted) {
@@ -73,7 +68,7 @@ class _RegisterPageState extends State<RegisterPage> {
   Future<void> createUserDocument(UserCredential? userCredential) async {
     if (userCredential != null && userCredential.user != null) {
       await FirebaseFirestore.instance
-          .collection('Users')
+          .collection('users')
           .doc(userCredential.user!.email)
           .set({
             'email': userCredential.user!.email,

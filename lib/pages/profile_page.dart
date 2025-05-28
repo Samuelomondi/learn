@@ -16,7 +16,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // future to fetch user details
   Future<DocumentSnapshot<Map<String, dynamic>>> getUserDetails() async {
-    return await FirebaseFirestore.instance.collection("Users")
+    return await FirebaseFirestore.instance.collection("users")
         .doc(currentUser!.email)
         .get();
   }

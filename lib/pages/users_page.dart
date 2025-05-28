@@ -1,4 +1,3 @@
-// UsersPage
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,18 +9,21 @@ import 'package:chat/helper/helper_function.dart';
 class UsersPage extends StatelessWidget {
   const UsersPage({super.key});
 
-  String getChatId(String uid1, String uid2) {
-    return uid1.hashCode <= uid2.hashCode ? '${uid1}_$uid2' : '${uid2}_$uid1';
-  }
-
   @override
   Widget build(BuildContext context) {
-    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      return const Scaffold(
+        body: Center(child: Text("No user logged in")),
+      );
+    }
+    final currentUserId = currentUser.uid;
+    final currentUserEmail = currentUser.email ?? '';
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      body: StreamBuilder(
-        stream: FirebaseFirestore.instance.collection("Users").snapshots(),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection("users").snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             displayMessageToUser("Something went wrong", context);
@@ -33,7 +35,7 @@ class UsersPage extends StatelessWidget {
           final users = snapshot.data!.docs
               .where((doc) => doc.id != currentUserId)
               .toList()
-            ..sort((a, b) => a['username'].compareTo(b['username']));
+            ..sort((a, b) => (a['username'] as String).compareTo(b['username'] as String));
 
           return Column(
             children: [
@@ -41,16 +43,18 @@ class UsersPage extends StatelessWidget {
                 padding: EdgeInsets.only(top: 50, left: 10),
                 child: Row(children: [MyBackButton()]),
               ),
-              const Text("U S E R S", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+              const Text(
+                "U S E R S",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              ),
+              const SizedBox(height: 10,),
               Expanded(
                 child: ListView.builder(
                   itemCount: users.length,
                   itemBuilder: (context, index) {
                     final user = users[index];
-                    final username = user['username'];
-                    final email = user['email'];
-                    final otherUserId = user.id;
-                    final chatId = getChatId(currentUserId, otherUserId);
+                    final username = user['username'] as String;
+                    final email = user['email'] as String;
 
                     return GestureDetector(
                       onTap: () {
@@ -58,10 +62,8 @@ class UsersPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (_) => ChatPage(
-                              chatId: chatId,
-                              currentUserId: currentUserId,
-                              otherUsername: username,
-                              otherUserId: otherUserId,
+                              currentUserEmail: currentUserEmail,
+                              otherUserEmail: email,
                             ),
                           ),
                         );

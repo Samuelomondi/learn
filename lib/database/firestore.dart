@@ -19,7 +19,7 @@ class FirestoreDatabase {
 
   // collection of posts
   final CollectionReference posts =
-      FirebaseFirestore.instance.collection('Posts');
+      FirebaseFirestore.instance.collection('posts');
 
   // post a message
   Future<void> addPost(String message) {
@@ -33,11 +33,10 @@ class FirestoreDatabase {
   // read posts
   Stream<QuerySnapshot> getPostsStream() {
     final postsStream = FirebaseFirestore.instance
-        .collection('Posts')
+        .collection('posts')
         .orderBy('Timestamp', descending: true)
         .snapshots();
 
     return postsStream;
   }
-
 }
