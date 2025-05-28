@@ -5,12 +5,14 @@ class ChatPage extends StatefulWidget {
   final String chatId;
   final String currentUserId;
   final String otherUsername;
+  final String otherUserId;
 
   const ChatPage({
     super.key,
     required this.chatId,
     required this.currentUserId,
     required this.otherUsername,
+    required this.otherUserId,
   });
 
   @override
@@ -20,10 +22,14 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   final TextEditingController _messageController = TextEditingController();
 
+  /// Sends a message to Firestore and updates the chat document
   void sendMessage() async {
     final message = _messageController.text.trim();
     if (message.isEmpty) return;
 
+    final now = FieldValue.serverTimestamp();
+
+    // Add message to messages subcollection
     await FirebaseFirestore.instance
         .collection('chats')
         .doc(widget.chatId)
@@ -31,38 +37,66 @@ class _ChatPageState extends State<ChatPage> {
         .add({
       'senderId': widget.currentUserId,
       'text': message,
-      'timestamp': FieldValue.serverTimestamp(),
+      'timestamp': now,
     });
+
+    // Update last message data in chat document
+    await FirebaseFirestore.instance
+        .collection('chats')
+        .doc(widget.chatId)
+        .set({
+      'lastMessage': message,
+      'lastMessageTimestamp': now,
+      'participants': [widget.currentUserId, widget.otherUserId],
+    }, SetOptions(merge: true));
 
     _messageController.clear();
   }
 
+  /// Builds individual chat bubbles for each message
   Widget buildMessageBubble(Map<String, dynamic> messageData) {
     final isMe = messageData['senderId'] == widget.currentUserId;
     final timestamp = messageData['timestamp'] as Timestamp?;
     final time = timestamp != null
         ? TimeOfDay.fromDateTime(timestamp.toDate()).format(context)
-        : '';
+        : '...';
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: isMe ? Colors.grey[500] : Colors.grey[300],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
-            Text(messageData['text']),
-            if (time.isNotEmpty)
-              Text(
-                time,
-                style: TextStyle(fontSize: 10, color: Colors.grey[700]),
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            // Limit message bubble width to 75% of screen
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isMe ? Colors.grey[500] : Colors.grey[300],
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(12),
+                topRight: const Radius.circular(12),
+                bottomLeft: Radius.circular(isMe ? 12 : 0),
+                bottomRight: Radius.circular(isMe ? 0 : 12),
               ),
-          ],
+            ),
+            child: Column(
+              crossAxisAlignment:
+              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                Text(
+                  messageData['text'] ?? '',
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  time,
+                  style: TextStyle(fontSize: 10, color: Colors.grey[800]),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -70,6 +104,7 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Stream to get real-time messages from Firestore
     final messagesRef = FirebaseFirestore.instance
         .collection('chats')
         .doc(widget.chatId)
@@ -83,6 +118,7 @@ class _ChatPageState extends State<ChatPage> {
       ),
       body: Column(
         children: [
+          // Message list
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: messagesRef.snapshots(),
@@ -102,20 +138,24 @@ class _ChatPageState extends State<ChatPage> {
                 }
 
                 return ListView.builder(
-                  reverse: true,
+                  reverse: true, // Show latest messages at bottom
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
-                    final messageData = messages[index].data() as Map<String, dynamic>;
+                    final messageData =
+                    messages[index].data() as Map<String, dynamic>;
                     return buildMessageBubble(messageData);
                   },
                 );
               },
             ),
           ),
+
+          // Message input field
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
             child: Row(
               children: [
+                // Text input
                 Expanded(
                   child: TextField(
                     controller: _messageController,
@@ -126,8 +166,12 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                 ),
                 const SizedBox(width: 8),
+                // Send button
                 IconButton(
-                  icon: const Icon(Icons.send),
+                  icon: Icon(
+                    Icons.send,
+                    color: Theme.of(context).colorScheme.inversePrimary,
+                  ),
                   onPressed: sendMessage,
                 ),
               ],

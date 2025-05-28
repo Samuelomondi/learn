@@ -15,24 +15,20 @@ class ChatsListPage extends StatelessWidget {
         title: const Text("Chats"),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        // Get chats where current user is a participant
         stream: FirebaseFirestore.instance
             .collection('chats')
             .where('participants', arrayContains: currentUserId)
-            .orderBy('createdAt', descending: true)
+            .orderBy('lastMessageTimestamp', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
-          // Handle errors
           if (snapshot.hasError) {
             return const Center(child: Text("Something went wrong"));
           }
 
-          // Show loading spinner
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // Show message if no chats found
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(child: Text("No chats yet"));
           }
@@ -44,50 +40,71 @@ class ChatsListPage extends StatelessWidget {
             itemBuilder: (context, index) {
               final chatDoc = chatDocs[index];
               final chatId = chatDoc.id;
-              final chatData = chatDoc.data() as Map<String, dynamic>;
+              final data = chatDoc.data() as Map<String, dynamic>;
+              final participants = data['participants'] as List<dynamic>;
+              final lastMessage = data['lastMessage'] ?? '';
+              final timestamp = data['lastMessageTimestamp'] as Timestamp?;
+              final time = timestamp != null
+                  ? TimeOfDay.fromDateTime(timestamp.toDate()).format(context)
+                  : '';
 
-              final participants = chatData['participants'] as List<dynamic>;
-
-              // Find the ID of the other participant
               final otherUserId = participants.firstWhere(
                     (id) => id != currentUserId,
                 orElse: () => 'Unknown',
               );
 
-              // Load the other user's info to show username
               return FutureBuilder<DocumentSnapshot>(
                 future: FirebaseFirestore.instance
                     .collection("Users")
                     .doc(otherUserId)
                     .get(),
                 builder: (context, userSnapshot) {
-                  if (userSnapshot.connectionState == ConnectionState.waiting) {
-                    return const ListTile(title: Text("Loading..."));
-                  }
-
                   if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-                    return const ListTile(title: Text("User not found"));
+                    return const SizedBox(); // Skip if user not found
                   }
 
-                  final userData = userSnapshot.data!.data() as Map<String, dynamic>;
-                  final username = userData['username'] ?? "Unknown";
-                  final email = userData['email'] ?? "";
+                  final userData =
+                  userSnapshot.data!.data() as Map<String, dynamic>;
+                  final username = userData['username'] ?? 'Unknown';
 
-                  return ListTile(
-                    title: Text(username),
-                    subtitle: Text(email),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ChatPage(
-                            chatId: chatId,
-                            currentUserId: currentUserId,
-                            otherUsername: username,
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+                    child: Container(
+                      decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          borderRadius: BorderRadius.circular(12)
+                      ),
+                      child: ListTile(
+                        title: Text(
+                            username,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
                           ),
                         ),
-                      );
-                    },
+                        subtitle: Text(
+                            lastMessage,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: Text(
+                          time,
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChatPage(
+                                chatId: chatId,
+                                currentUserId: currentUserId,
+                                otherUsername: username,
+                                otherUserId: otherUserId,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   );
                 },
               );
