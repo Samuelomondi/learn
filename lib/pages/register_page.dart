@@ -36,11 +36,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
     // make sure passwords match
     if (passwordController.text != confirmPasswordController.text) {
-      // pop loading circle
-      Navigator.pop(context);
-
-      // show error
-      displayMessageToUser("Passwords don't match", context);
+      if (context.mounted) {
+        // pop loading circle
+        Navigator.pop(context);
+        // show error
+        displayMessageToUser("Passwords don't match", context);
+      }
     } else {
       // try creating the user
       try {

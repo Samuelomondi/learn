@@ -4,9 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:chat/components/my_back_button.dart';
 import 'package:chat/components/my_list_tile.dart';
 import 'package:chat/helper/helper_function.dart';
+import 'chat_page.dart';
 
 class UsersPage extends StatelessWidget {
   const UsersPage({super.key});
+
+  // Helper to generate a consistent chatId between two users
+  String getChatId(String uid1, String uid2) {
+    return uid1.hashCode <= uid2.hashCode ? '${uid1}_$uid2' : '${uid2}_$uid1';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,36 +23,33 @@ class UsersPage extends StatelessWidget {
       body: StreamBuilder(
         stream: FirebaseFirestore.instance.collection("Users").snapshots(),
         builder: (context, snapshot) {
-          // any errors
+          // handle errors
           if (snapshot.hasError) {
             displayMessageToUser("Something went wrong", context);
+            return const Center(child: Text("Error loading users"));
           }
-          
-          // loading circle
+
+          // loading state
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
-          
-          // no users
-          if (snapshot.data == null) {
-            return const Text("No Data");
+
+          // no data
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text("No users found."));
           }
-          
-          // get all users
+
+          // exclude current user and sort alphabetically
           final users = snapshot.data!.docs
-              .where((doc) => doc.id != currentUserId) // Exclude current user
-              .toList();
-          
+              .where((doc) => doc.id != currentUserId)
+              .toList()
+            ..sort((a, b) => a['username'].compareTo(b['username']));
+
           return Column(
             children: [
               // back button
               Padding(
-                padding: const EdgeInsets.only(
-                    top: 50,
-                    left: 10
-                ),
+                padding: const EdgeInsets.only(top: 50, left: 10),
                 child: Row(
                   children: [
                     MyBackButton(),
@@ -54,27 +57,69 @@ class UsersPage extends StatelessWidget {
                 ),
               ),
 
-              Text(
-                  "U S E R S",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  ),
+              const Text(
+                "U S E R S",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
               ),
 
+              // list of users
               Expanded(
                 child: ListView.builder(
                   itemCount: users.length,
                   itemBuilder: (context, index) {
-                    // get individual user
                     final user = users[index];
+                    final username = user['username'];
+                    final email = user['email'];
+                    final otherUserId = user.id;
 
-                    // get data from each user
-                    String username = user['username'];
-                    String email = user['email'];
+                    return GestureDetector(
+                      onTap: () async {
+                        // Show loading dialog while checking/creating chat
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (_) =>
+                          const Center(child: CircularProgressIndicator()),
+                        );
 
-                    return MyListTile(title: username, subTitle: email);
-                  }
+                        final chatId = getChatId(currentUserId, otherUserId);
+
+                        final chatRef = FirebaseFirestore.instance
+                            .collection('Chats')
+                            .doc(chatId);
+
+                        final chatSnapshot = await chatRef.get();
+                        if (!chatSnapshot.exists) {
+                          await chatRef.set({
+                            'participants': [currentUserId, otherUserId],
+                            'createdAt': FieldValue.serverTimestamp(),
+                          });
+                        }
+
+                        // Close loading dialog
+                        Navigator.pop(context);
+
+                        // Navigate to ChatPage
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatPage(
+                              chatId: chatId,
+                              currentUserId: currentUserId,
+                              otherUsername: username,
+                            ),
+                          ),
+                        );
+                      },
+                      child: MyListTile(
+                        title: username,
+                        subTitle: email,
+                      ),
+                    );
+                  },
                 ),
               ),
             ],

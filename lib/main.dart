@@ -1,3 +1,4 @@
+import 'package:chat/pages/chats_list_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:chat/auth/auth.dart';
@@ -6,7 +7,6 @@ import 'package:chat/firebase_options.dart';
 import 'package:chat/pages/home_page.dart';
 import 'package:chat/pages/profile_page.dart';
 import 'package:chat/pages/users_page.dart';
-import 'package:chat/pages/chat_page.dart';
 import 'package:chat/theme/dark_mode.dart';
 import 'package:chat/theme/light_mode.dart';
 
@@ -29,7 +29,7 @@ class MainApp extends StatelessWidget {
       routes: {
         '/login_register_page':(context) => const LoginOrRegister(),
         '/home_page':(context) => HomePage(),
-        '/chats_page':(context) => ChatsPage(),
+        '/chats_page':(context) => ChatsListPage(),
         '/profile_page':(context) => ProfilePage(),
         '/users_page':(context) => UsersPage(),
       },
