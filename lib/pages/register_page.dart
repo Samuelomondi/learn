@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:learn/components/my_button.dart';
-import 'package:learn/components/my_textfield.dart';
+import 'package:chat/components/my_button.dart';
+import 'package:chat/components/my_textfield.dart';
 
 import '../helper/helper_function.dart';
 
@@ -51,17 +51,19 @@ class _RegisterPageState extends State<RegisterPage> {
         );
 
         // create a user document to add to firestore
-        createUserDocument(userCredential);
+        await createUserDocument(userCredential);
 
         // pop loading circle
-        if (context.mounted) Navigator.pop(context);
+        if (context.mounted) {
+          Navigator.pop(context);
+        }
 
       } on FirebaseAuthException catch (e) {
-        // pop loading circle
-        Navigator.pop(context);
-
-        // show error
-        displayMessageToUser(e.code, context);
+        // remove loading indicator
+        if (context.mounted) {
+          Navigator.pop(context);
+          displayMessageToUser(e.code, context);
+        }
       }
     }
   }
@@ -84,7 +86,7 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(

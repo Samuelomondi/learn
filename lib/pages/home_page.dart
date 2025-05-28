@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:learn/components/my_drawer.dart';
-import 'package:learn/components/my_post_button.dart';
-import 'package:learn/components/my_textfield.dart';
-import 'package:learn/database/firestore.dart';
+import 'package:chat/components/my_drawer.dart';
+import 'package:chat/components/my_post_button.dart';
+import 'package:chat/components/my_textfield.dart';
+import 'package:chat/database/firestore.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({super.key});
@@ -43,7 +43,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: Text(
             "W A L L",

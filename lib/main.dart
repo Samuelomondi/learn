@@ -1,13 +1,14 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:learn/auth/auth.dart';
-import 'package:learn/auth/login_or_register.dart';
-import 'package:learn/firebase_options.dart';
-import 'package:learn/pages/home_page.dart';
-import 'package:learn/pages/profile_page.dart';
-import 'package:learn/pages/users_page.dart';
-import 'package:learn/theme/dark_mode.dart';
-import 'package:learn/theme/light_mode.dart';
+import 'package:chat/auth/auth.dart';
+import 'package:chat/auth/login_or_register.dart';
+import 'package:chat/firebase_options.dart';
+import 'package:chat/pages/home_page.dart';
+import 'package:chat/pages/profile_page.dart';
+import 'package:chat/pages/users_page.dart';
+import 'package:chat/pages/chat_page.dart';
+import 'package:chat/theme/dark_mode.dart';
+import 'package:chat/theme/light_mode.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +29,7 @@ class MainApp extends StatelessWidget {
       routes: {
         '/login_register_page':(context) => const LoginOrRegister(),
         '/home_page':(context) => HomePage(),
+        '/chats_page':(context) => ChatsPage(),
         '/profile_page':(context) => ProfilePage(),
         '/users_page':(context) => UsersPage(),
       },

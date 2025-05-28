@@ -1,16 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:learn/components/my_back_button.dart';
-import 'package:learn/components/my_list_tile.dart';
-import 'package:learn/helper/helper_function.dart';
+import 'package:chat/components/my_back_button.dart';
+import 'package:chat/components/my_list_tile.dart';
+import 'package:chat/helper/helper_function.dart';
 
 class UsersPage extends StatelessWidget {
   const UsersPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: StreamBuilder(
         stream: FirebaseFirestore.instance.collection("Users").snapshots(),
         builder: (context, snapshot) {
@@ -32,7 +35,9 @@ class UsersPage extends StatelessWidget {
           }
           
           // get all users
-          final users = snapshot.data!.docs;
+          final users = snapshot.data!.docs
+              .where((doc) => doc.id != currentUserId) // Exclude current user
+              .toList();
           
           return Column(
             children: [

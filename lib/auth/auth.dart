@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:learn/auth/login_or_register.dart';
+import 'package:chat/auth/login_or_register.dart';
 
 import '../pages/home_page.dart';
 

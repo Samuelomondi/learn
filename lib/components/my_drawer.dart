@@ -12,7 +12,7 @@ class MyDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -29,7 +29,7 @@ class MyDrawer extends StatelessWidget {
 
               // home
               Padding(
-                padding: const EdgeInsets.all(25.0),
+                padding: const EdgeInsets.only(top: 25.0, left: 25),
                 child: ListTile(
                   leading: Icon(
                     Icons.home,
@@ -48,9 +48,57 @@ class MyDrawer extends StatelessWidget {
                 ),
               ),
 
+              // chats
+              Padding(
+                padding: const EdgeInsets.only(top: 10, left: 25),
+                child: ListTile(
+                  leading: Icon(
+                    Icons.message,
+                    color: Theme.of(context).colorScheme.inversePrimary,
+                  ),
+                  title: Text(
+                    "C H A T S",
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.inversePrimary
+                    ),
+                  ),
+                  onTap: () {
+                    // pop drawer
+                    Navigator.pop(context);
+
+                    // navigate to profile page
+                    Navigator.pushNamed(context, '/chats_page');
+                  },
+                ),
+              ),
+
+              // users
+              Padding(
+                padding: const EdgeInsets.only(top: 10, left: 25),
+                child: ListTile(
+                  leading: Icon(
+                    Icons.group,
+                    color: Theme.of(context).colorScheme.inversePrimary,
+                  ),
+                  title: Text(
+                    "U S E R S",
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.inversePrimary,
+                    ),
+                  ),
+                  onTap: () {
+                    // pop drawer
+                    Navigator.pop(context);
+
+                    // navigate to users page
+                    Navigator.pushNamed(context, '/users_page');
+                  },
+                ),
+              ),
+
               // profile
               Padding(
-                padding: const EdgeInsets.all(25.0),
+                padding: const EdgeInsets.only(top: 10, left: 25),
                 child: ListTile(
                   leading: Icon(
                     Icons.person,
@@ -71,31 +119,6 @@ class MyDrawer extends StatelessWidget {
                   },
                 ),
               ),
-
-              // users
-              Padding(
-                padding: const EdgeInsets.all(25.0),
-                child: ListTile(
-                  leading: Icon(
-                    Icons.group,
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                  ),
-                  title: Text(
-                      "U S E R S",
-                      style: TextStyle(
-                          color: Theme.of(context).colorScheme.inversePrimary,
-                      ),
-                  ),
-                  onTap: () {
-                    // pop drawer
-                    Navigator.pop(context);
-
-                    // navigate to users page
-                    Navigator.pushNamed(context, '/users_page');
-                  },
-                ),
-              ),
-
             ],
           ),
 

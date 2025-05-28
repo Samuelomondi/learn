@@ -1,8 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:learn/components/my_button.dart';
-import 'package:learn/components/my_textfield.dart';
-import 'package:learn/helper/helper_function.dart';
+import 'package:chat/components/my_button.dart';
+import 'package:chat/components/my_textfield.dart';
+import 'package:chat/helper/helper_function.dart';
 
 class LoginPage extends StatefulWidget {
   final void Function()? onTap;
@@ -32,14 +32,17 @@ class _LoginPageState extends State<LoginPage> {
       await FirebaseAuth.instance.signInWithEmailAndPassword(email: emailController.text, password: passwordController.text);
 
       // pop loading circle
-      if (context.mounted) Navigator.pop(context);
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
     }
 
-    // display any errors
     on FirebaseAuthException catch (e) {
-      // pop loading circle
-      Navigator.pop(context);
-      displayMessageToUser(e.code, context);
+      // remove loading indicator and display any errors
+      if (context.mounted) {
+        Navigator.pop(context);
+        displayMessageToUser(e.code, context);
+      }
     }
   }
 
@@ -47,7 +50,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(

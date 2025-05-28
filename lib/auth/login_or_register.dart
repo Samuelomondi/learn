@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:learn/pages/login_page.dart';
-import 'package:learn/pages/register_page.dart';
+import 'package:chat/pages/login_page.dart';
+import 'package:chat/pages/register_page.dart';
 
 class LoginOrRegister extends StatefulWidget {
   const LoginOrRegister({super.key});
